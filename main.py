@@ -2,58 +2,50 @@ import numpy as np
 import scipy.linalg
 import matplotlib.pyplot as plt
 from collections import deque
+import json
 
-# Função para gerar dados aleatórios
 def gerar_dados(n):
+    # Função para gerar matriz e vetor aleatórios.
     A = np.random.randint(1, 10, (n, n))  # Matriz A
     b = np.random.randint(1, 10, n)       # Vetor b
     return A, b
 
-# Função para resolver o sistema linear usando decomposição LU
 def resolver_sistema(A, b):
+    # Função para resolver o sistema linear usando decomposição LU.
     P, L, U = scipy.linalg.lu(A)  # Decomposição LU
     y = scipy.linalg.solve(L, b)  # Resolução de Ly = b
     x = scipy.linalg.solve(U, y)  # Resolução de Ux = y
     return x
 
-# Função para plotar os resultados
 def plotar_resultados(A, b, x):
+    # Função para plotar os resultados.
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-    
-    # Plotando a solução x como barras
-    ax.bar(range(len(x)), x, label='Solução x', color='b')
-    
-    # Plotando o vetor b como linha
-    ax.plot(range(len(A)), b, label='Resultado b', color='r', linestyle='--', marker='o')
-    
-    # Adicionando rótulos aos eixos
+    cmap = plt.get_cmap("tab10")
+
+    ax.bar(range(len(x)), x, label='Solução x', color=cmap(0))
+    ax.plot(range(len(A)), b, label='Vetor b', color=cmap(1), linestyle='--', marker='o')
+
     ax.set_xlabel('Índice')
     ax.set_ylabel('Valor')
-    
-    # Adicionando título
     ax.set_title('Solução do Sistema Linear e Resultado b')
-    
-    # Adicionando legenda
     ax.legend()
-    
-    # Adicionando anotações para destacar pontos específicos
+    ax.grid(True, linestyle='--', alpha=0.7)
+
     for i, (xi, bi) in enumerate(zip(x, b)):
         ax.annotate(f'{xi:.2f}', (i, xi), textcoords="offset points", xytext=(0,10), ha='center', color='blue')
         ax.annotate(f'{bi:.2f}', (i, bi), textcoords="offset points", xytext=(0,-15), ha='center', color='red')
-    
-    # Adicionando grade
-    ax.grid(True, linestyle='--', alpha=0.7)
-    
-    # Mostrando a figura
-    plt.show()
 
-# Função para armazenar a solução em uma fila
+    plt.savefig("resultado_grafico.png", dpi=300)
+    plt.show()
+    print("Gráfico salvo como 'resultado_grafico.png'.")
+
 def armazenar_em_fila(x):
+    # Função para armazenar a solução em uma fila.
     fila = deque(np.float64(x))
     return fila
 
-# Função para validar a entrada do usuário
 def validar_entrada():
+    # Função para validar a entrada do usuário.
     while True:
         try:
             n = int(input("Digite o tamanho da matriz (n): "))  # Tamanho da matriz
@@ -64,33 +56,57 @@ def validar_entrada():
         except ValueError:
             print("Entrada inválida. Por favor, insira um número inteiro.")
 
-# Função para permitir a entrada manual de A e b
 def entrada_manual(n):
+    # Função para permitir a entrada manual de A e b.
     A = np.zeros((n, n), dtype=int)
     b = np.zeros(n, dtype=int)
     print("Digite os elementos da matriz A:")
     for i in range(n):
         for j in range(n):
-            A[i, j] = int(input(f"A[{i}][{j}] = "))
+            while True:
+                try:
+                    A[i, j] = int(input(f"A[{i}][{j}] = "))
+                    break
+                except ValueError:
+                    print("Entrada inválida. Por favor, insira um número inteiro.")
     print("Digite os elementos do vetor b:")
     for i in range(n):
-        b[i] = int(input(f"b[{i}] = "))
+        while True:
+            try:
+                b[i] = int(input(f"b[{i}] = "))
+                break
+            except ValueError:
+                print("Entrada inválida. Por favor, insira um número inteiro.")
     return A, b
+
+def salvar_resultados_em_json(A, b, x, filename="resultados.json"):
+    # Função para salvar os resultados em um arquivo JSON.
+    resultados = {
+        "Matriz A": A.tolist(),
+        "Vetor b": b.tolist(),
+        "Solução x": x.tolist(),
+    }
+    with open(filename, "w") as f:
+        json.dump(resultados, f, indent=4)
+    print(f"Resultados salvos em '{filename}'.")
 
 def main():
     # Entradas
     n = validar_entrada()
 
     # Escolha entre gerar dados aleatórios ou entrada manual
-    escolha = input("Deseja gerar dados aleatórios (A) ou inserir manualmente (M)? [Padrão: A] ").strip().upper() or 'A'
-    if escolha == 'M':
+    escolha = input("Escolha como deseja inserir os dados: \n"
+                    "1 - Gerar dados aleatórios\n"
+                    "2 - Inserir manualmente\n"
+                    "Digite sua escolha [1/2]: ").strip()
+    if escolha == '2':
         A, b = entrada_manual(n)
     else:
         A, b = gerar_dados(n)
 
-    # Verificar se a matriz A é invertível
-    if np.linalg.det(A) == 0:
-        print("A matriz A não é invertível. Por favor, insira outra matriz.")
+    # Verificar se a matriz A é invertível e bem condicionada
+    if np.linalg.det(A) == 0 or np.linalg.cond(A) > 1e10:
+        print("A matriz A não é invertível ou é mal condicionada. Por favor, insira outra matriz.")
         return
 
     # Resolução do sistema
@@ -103,6 +119,9 @@ def main():
 
     # Visualização
     plotar_resultados(A, b, x)
+
+    # Salvar os resultados em um arquivo JSON
+    salvar_resultados_em_json(A, b, x)
 
     # Exibição dos resultados
     print("\nMatriz A:")
