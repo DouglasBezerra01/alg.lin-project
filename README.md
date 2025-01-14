@@ -1,3 +1,2 @@
-# alg.lin-project
-Projeto para o curso DescMat - Python aplicado à matemática.
-Trata-se de um projeto de resolução para um problema matemático da área de Álgebra Linear envolvendo a resolução de um sistema linear usando decomposição LU.
+# Decomposição LU
+O algoritmo desenvolvido é eficiente para resolver sistemas de equações lineares com solução única. A flexibilidade da entrada de dados e a visualização gráfica tornam o programa uma ferramenta útil para ensino e experimentação. Com melhorias futuras, ele pode ser ampliado para tratar casos mais complexos, como sistemas indeterminados ou mal condicionados.
